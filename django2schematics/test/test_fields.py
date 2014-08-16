@@ -35,7 +35,19 @@ class IntegerFieldTest(TestCase):
     def test_output(self):
         field = IntegerField(name='myint')
         field_model = FieldModel.from_django(field)
-        self.assertEqual(field_model.to_string(), 'myint = IntType()')
+        self.assertEqual(field_model.to_string(), 'myint = IntType(required=True)')
+
+    def test_required(self):
+        field = IntegerField(name='myint', null=True)
+        field_model = FieldModel.from_django(field)
+        option = field_model.options[0]
+        self.assertEqual(option.name, 'required')
+        self.assertEqual(option.value, 'False')
+        field = IntegerField(name='myint', null=False)
+        field_model = FieldModel.from_django(field)
+        option = field_model.options[0]
+        self.assertEqual(option.name, 'required')
+        self.assertEqual(option.value, 'True')
 
 
 class CharFieldTest(TestCase):

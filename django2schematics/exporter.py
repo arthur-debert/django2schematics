@@ -19,12 +19,12 @@ class OptionModel(Model):
         return "%s" % self.name
 
 
-def get_option(field, attr_name):
+def get_option(field, attr_name, mapped_name, transformer=None):
     if hasattr(field, attr_name) and getattr(field, attr_name) != NOT_PROVIDED:
-        print field, attr_name, getattr(field, attr_name)
+        value = getattr(field, attr_name)
         return OptionModel({
-            'name': attr_name,
-            'value': getattr(field, attr_name)
+            'name': mapped_name or attr_name,
+            'value': value if not transformer else transformer(value),
         })
 
 
@@ -53,8 +53,10 @@ class FieldModel(Model):
 
     @classmethod
     def get_options(cls, field):
-        options = [option for option in
-                   [get_option(field, name) for name in "required", 'default']
+        options = [option for option in [
+            get_option(field, name, mapped_name, transformer) for name, mapped_name, transformer in (
+                       ("null", 'required', lambda x: not x),
+                       ('default', 'default', None))]
                    if option]
         return  options
 
@@ -67,7 +69,7 @@ class CharFieldModel(FieldModel):
     @classmethod
     def get_options(cls, field):
         return [x for x in FieldModel.get_options(field) +
-                   [get_option(field, 'max_length')] if x ]
+                   [get_option(field, 'max_length', 'max_length')] if x ]
 
 
 class SchematicsModel(Model):
