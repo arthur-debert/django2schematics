@@ -1,7 +1,9 @@
 =================
 Django2Schematics
 =================
-
+.. image:: https://travis-ci.org/arthur-debert/django2schematics.svg?branch=master
+    :target: https://travis-ci.org/arthur-debert/django2schematics
+             
 This module is a code generator, it can read Django models and outputs
 corresponding ones for schematics.
 
