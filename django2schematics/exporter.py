@@ -95,6 +95,10 @@ class ForeignKeyModel(FieldModel):
             OptionModel({'value': field.rel.to})]
 
 
+class IntegerFieldModel(FieldModel):
+    pass
+
+
 class SchematicsModel(Model):
     name = StringType(required=True)
     fields = ListType(FieldModel)
@@ -103,9 +107,24 @@ class SchematicsModel(Model):
     def from_django(the_model):
         model = SchematicsModel({
             'name': the_model._meta.object_name,
+            'fields': [],
         })
         for field in the_model._meta.fields:
             model.fields.append(FieldModel.from_django(field))
+        return model
+
+    def to_string(self):
+        return 'class %s(%s):\n    %s' % (self.name, 'Model', "\n    ".join([
+            field.to_string() for field in self.fields]))
+
+
+class DjangoApp(Model):
+    app_label = StringType()
+    models = ListType(SchematicsModel)
+
+    def to_string(self, context=None):
+        return "\n\n".join([model.to_string(context=context)
+                            for model in self.models])
 
 
 def get_schematics_type(the_type):
@@ -140,4 +159,5 @@ TYPE_MAP = {
     StringType: CharFieldModel,
     DecimalType: DecimalFieldModel,
     ModelType: ForeignKeyModel,
+    IntType: IntegerFieldModel,
 }

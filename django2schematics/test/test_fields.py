@@ -1,8 +1,4 @@
 from __future__ import absolute_import
-import os
-os.environ['DJANGO_SETTINGS_MODULE'] = \
-    'django2schematics.test.sampleproject.settings'
-
 from unittest2 import TestCase
 
 from schematics.types import (
