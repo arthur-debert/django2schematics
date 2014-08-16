@@ -57,6 +57,12 @@ class CharFieldTest(TestCase):
     def test_get_schematic_type(self):
         self.assertEqual(get_schematics_type(type(CharField())), StringType)
 
+    def test_max_length(self):
+        field = CharField(name='thestring', max_length=30)
+        field_model = FieldModel.from_django(field)
+        option = field_model.options[1]
+        self.assertEqual(option.name, 'max_length')
+        self.assertEqual(option.value, '30')
 
 class AutoFieldTypeTest(TestCase):
 
