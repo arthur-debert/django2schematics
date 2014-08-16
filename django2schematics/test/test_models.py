@@ -12,8 +12,8 @@ from django2schematics.exporter import (
 
 
 class AModel(Model):
-            label = CharField(max_length=20)
-            count = IntegerField()
+    label = CharField(max_length=20)
+    count = IntegerField()
 
 
 class ModelFieldListTest(TestCase):
