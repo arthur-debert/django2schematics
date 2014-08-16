@@ -37,12 +37,12 @@ class FieldModel(Model):
                                 ",".join([x.to_string() for x in self.options]))
 
 
-class ConvertedModel(Model):
+class SchematicsModel(Model):
     name = StringType(required=True)
     fields = ListType(FieldModel)
 
     def from_django(self, model):
-        model = ConvertedModel({
+        model = SchematicsModel({
             'name': model._meta.object_name,
         })
         for field in model._meta.fields:
