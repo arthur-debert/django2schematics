@@ -6,14 +6,14 @@ os.environ['DJANGO_SETTINGS_MODULE'] = \
 from unittest2 import TestCase
 
 from schematics.types import (
-    IntType, StringType, DateTimeType, EmailType,  BooleanType
-)
+    IntType, StringType, DateTimeType, EmailType,  BooleanType,
+    DecimalType)
 from schematics.types.compound import ModelType
 
 from django.db.models import (
     CharField, IntegerField, AutoField, DateTimeField,
-    EmailField, BooleanField, NullBooleanField, ForeignKey
-)
+    EmailField, BooleanField, NullBooleanField, ForeignKey,
+    DecimalField)
 
 from django2schematics.djtypes import NullBooleanType
 from django2schematics.exporter import get_type, get_schematics_type, FieldModel
@@ -64,8 +64,8 @@ class CharFieldTest(TestCase):
         self.assertEqual(option.name, 'max_length')
         self.assertEqual(option.value, '30')
 
-class AutoFieldTypeTest(TestCase):
 
+class AutoFieldTypeTest(TestCase):
     def test_get_type(self):
         self.assertEqual(get_type(AutoField(primary_key=True)),
                          IntegerField)
@@ -118,3 +118,27 @@ class ForeignKeyTypeTest(TestCase):
     def test_get_schematic_type(self):
         self.assertEqual(get_schematics_type(type(ForeignKey('self'))),
                          ModelType)
+
+    def test_output(self):
+        field = ForeignKey('self', name='myfk')
+        field_model = FieldModel.from_django(field)
+        self.assertEqual(field_model.to_string(),
+                         "myfk = ModelType('self', required=True)")
+
+
+class DecimalFieldTest(TestCase):
+    def test_get_type(self):
+        self.assertEqual(get_type(DecimalField()), DecimalField)
+
+    def test_get_schematic_type(self):
+        self.assertEqual(get_schematics_type(type(DecimalField())), DecimalType)
+
+    def test_max_length(self):
+        field = DecimalField(name='thestring', max_digits=5, decimal_places=2)
+        field_model = FieldModel.from_django(field)
+        option = field_model.options[2]
+        self.assertEqual(option.name, 'max_digits')
+        self.assertEqual(option.value, '5')
+        option = field_model.options[1]
+        self.assertEqual(option.name, 'decimal_places')
+        self.assertEqual(option.value, '2')

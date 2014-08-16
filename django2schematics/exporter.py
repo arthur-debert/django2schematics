@@ -5,7 +5,7 @@ from schematics.models import Model
 from schematics.types.compound import ModelType, ListType
 from django.db.models import AutoField, CharField, DateTimeField, \
     BooleanField, EmailField, NullBooleanField, ForeignKey, \
-    IntegerField
+    IntegerField, FloatField, DecimalField
 from django.db.models.fields import NOT_PROVIDED
 
 
@@ -16,10 +16,12 @@ class OptionModel(Model):
     def to_string(self):
         if self.name:
             return "%s=%s" % (self.name, self.value)
-        return "%s" % self.name
+        return "'%s'" % self.value
 
 
 def get_option(field, attr_name, mapped_name, transformer=None):
+    if attr_name == 'name':
+        return
     if hasattr(field, attr_name) and getattr(field, attr_name) != NOT_PROVIDED:
         value = getattr(field, attr_name)
         return OptionModel({
@@ -33,12 +35,11 @@ class FieldModel(Model):
     options = ListType(OptionModel)
     type = StringType()
 
-
     @classmethod
     def from_django(cls, field):
-        the_cls =  TYPE_MAP.get(
-            get_schematics_type(type(field)),  FieldModel)
-        model =  the_cls(the_cls.init_args(field))
+        the_cls = TYPE_MAP.get(
+            get_schematics_type(type(field)), FieldModel)
+        model = the_cls(the_cls.init_args(field))
         model.options = the_cls.get_options(field)
         return model
 
@@ -46,30 +47,52 @@ class FieldModel(Model):
     def init_args(cls, field):
         the_type = get_type(field)
         sh_type = get_schematics_type(the_type)
-        return {'name': field.name,
-                           'type': sh_type.__name__,
-                           'options': [],
+        return {
+            'name': field.name,
+            'type': sh_type.__name__,
+            'options': [],
         }
 
     @classmethod
     def get_options(cls, field):
         options = [option for option in [
-            get_option(field, name, mapped_name, transformer) for name, mapped_name, transformer in (
-                       ("null", 'required', lambda x: not x),
-                       ('default', 'default', None))]
-                   if option]
-        return  options
+            get_option(field, name, mapped_name, transformer) for
+            name, mapped_name, transformer in (
+                ("null", 'required', lambda x: not x),
+                ('default', 'default', None))] if option]
+        return options
 
     def to_string(self):
+        # foreign keys and related options always come first
+        ordered_options = sorted(self.options, key=lambda x: bool(x.name))
         return "%s = %s(%s)" % (self.name, self.type,
-                                ",".join([x.to_string() for x in self.options]))
+                                ", ".join([option.to_string() for option in
+                                           ordered_options]))
 
 
 class CharFieldModel(FieldModel):
     @classmethod
     def get_options(cls, field):
         return [x for x in FieldModel.get_options(field) +
-                   [get_option(field, 'max_length', 'max_length')] if x ]
+                [get_option(field, 'max_length', 'max_length')] if x]
+
+
+class DecimalFieldModel(FieldModel):
+    @classmethod
+    def get_options(cls, field):
+        return [x for x in FieldModel.get_options(field) +
+                [get_option(field, name, mapped_name) for
+                 name, mapped_name in [
+                 ('decimal_places', 'decimal_places'),
+                 ('max_digits', 'max_digits')]] if x]
+
+
+class ForeignKeyModel(FieldModel):
+    @classmethod
+    def get_options(cls, field):
+        options = [x for x in FieldModel.get_options(field)]
+        return options + [
+            OptionModel({'value': field.rel.to})]
 
 
 class SchematicsModel(Model):
@@ -77,11 +100,11 @@ class SchematicsModel(Model):
     fields = ListType(FieldModel)
 
     @staticmethod
-    def from_django(model):
+    def from_django(the_model):
         model = SchematicsModel({
-            'name': model._meta.object_name,
+            'name': the_model._meta.object_name,
         })
-        for field in model._meta.fields:
+        for field in the_model._meta.fields:
             model.fields.append(FieldModel.from_django(field))
 
 
@@ -95,13 +118,15 @@ def get_schematics_type(the_type):
         EmailField: EmailType,
         NullBooleanField: NullBooleanType,
         ForeignKey: ModelType,
+        DecimalField: DecimalType,
+        FloatField: FloatType,
     }.get(the_type, StringType)
 
 
 def get_type(field):
     known_types = (
         AutoField, IntegerField, CharField, DateTimeField, BooleanField,
-        EmailField, NullBooleanField, ForeignKey)
+        EmailField, NullBooleanField, ForeignKey, DecimalField)
     if type(field) in known_types:
         if type(field) == AutoField:
             return IntegerField
@@ -111,7 +136,8 @@ def get_type(field):
             return this_type
 
 
-
 TYPE_MAP = {
     StringType: CharFieldModel,
+    DecimalType: DecimalFieldModel,
+    ModelType: ForeignKeyModel,
 }
