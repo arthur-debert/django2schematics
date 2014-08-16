@@ -1,0 +1,17 @@
+from distutils.core import setup
+
+setup(
+    name='Django2Schematics',
+    version='0.1',
+    packages=['django2schematics','django2schematics.test'],
+    author='Arthur Debert',
+    author_email='arthur@stimuli.com.br',
+    license='LICENSE.txt',
+    description='Generates shematics models from Django ones.',
+    long_description=open('README.txt', 'r').read(),
+    install_requires=[
+        'django==1.6.1',
+        'schematics==0.9-5'
+    ]
+
+)
