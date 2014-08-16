@@ -6,7 +6,7 @@ from django.db.models import (
     CharField, IntegerField, Model
 )
 
-from django2schematics.exporter import (
+from django2schematics.converter import (
     SchematicsModel, CharFieldModel, IntegerFieldModel
 )
 

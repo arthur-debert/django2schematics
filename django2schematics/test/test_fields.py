@@ -12,7 +12,7 @@ from django.db.models import (
     DecimalField)
 
 from django2schematics.djtypes import NullBooleanType
-from django2schematics.exporter import get_type, get_schematics_type, FieldModel
+from django2schematics.converter import get_type, get_schematics_type, FieldModel
 
 
 class IntegerFieldTest(TestCase):
