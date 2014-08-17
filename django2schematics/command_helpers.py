@@ -34,19 +34,17 @@ def get_models_to_output(*apps_or_models):
     return app_model_dict
 
 
-def get_output(to_file=False, auto_file_name='domain_auto', *apps_or_models):
+def get_output(apps_or_models, to_file=False, auto_file_name='domain_auto', ):
     data = get_models_to_output(*apps_or_models)
     full_buffer = []
-    for app_name, models in data:
+    for app_name, models in data.items():
+        this_buffer = []
+        for model in models:
+            this_buffer.append("\n\n" + SchematicsModel.from_django(model).to_string())
         if to_file:
-            this_buffer = []
-        else:
-            this_buffer = full_buffer
-        this_buffer.append("\n\n".join([
-            SchematicsModel.from_django(model).to_string() for model in models]))
-        if to_file:
-            app_dir = os.path.dirname(models[0].__file__)
+            app_dir = os.path.dirname(models[0].__module__)
             output_file = os.path.join(app_dir, '%s.py' % auto_file_name)
-            open(output_file, 'w').write(this_buffer)
+            open(output_file, 'w').write("".join(this_buffer))
+        full_buffer += this_buffer
     if not to_file:
-        print "\n\n".join(full_buffer)
+        return "\n".join(full_buffer)
