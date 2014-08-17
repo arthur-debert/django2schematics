@@ -11,3 +11,4 @@ class SampleModel(models.Model):
 
 class AnotherModel(models.Model):
     yo = models.CharField(max_length=20)
+    linked = models.ForeignKey(SampleModel)

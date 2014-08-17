@@ -12,6 +12,7 @@ class SampleModel(Model):
 class AnotherModel(Model):
     id = IntType(required=True)
     yo = StringType(required=True, max_length=20)
+    linked = ModelType(SampleModel, required=True)
 
 
 class SampleModelTwo(Model):

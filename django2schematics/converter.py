@@ -18,7 +18,7 @@ class OptionModel(Model):
         val = self.value if not self.is_string else "'%s'" % self.value
         if self.name:
             return "%s=%s" % (self.name, val)
-        return "'%s'" % self.value
+        return "%s" % val
 
 
 def get_option(field, attr_name, mapped_name, is_string, transformer=None):
@@ -95,10 +95,12 @@ class ForeignKeyModel(FieldModel):
     def get_options(cls, field):
         options = [x for x in FieldModel.get_options(field)]
         value = field.rel.to
+        is_string = True
         if isinstance(value, type):
-            value = value.__class__.__name__
+            value = value._meta.object_name
+            is_string = False
         return options + [
-            OptionModel({'value': value, 'name': '', 'is_string':True})]
+            OptionModel({'value': value, 'name': '', 'is_string':is_string})]
 
 
 class IntegerFieldModel(FieldModel):
