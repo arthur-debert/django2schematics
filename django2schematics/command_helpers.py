@@ -43,7 +43,7 @@ def get_output(apps_or_models, to_file=False, auto_file_name='domain_auto', ):
             this_buffer.append("\n\n" + SchematicsModel.from_django(model).to_string())
         if to_file:
             app_dir = os.path.dirname(models[0].__module__)
-            output_file = os.path.join(app_dir, '%s.py' % auto_file_name)
+            output_file = os.path.join(app_dir, app_name, '%s.py' % auto_file_name)
             open(output_file, 'w').write("".join(this_buffer))
         full_buffer += this_buffer
     if not to_file:
