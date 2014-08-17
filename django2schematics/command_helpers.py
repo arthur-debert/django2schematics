@@ -9,7 +9,10 @@ from django2schematics.converter import SchematicsModel
 def get_schematics_models(app_name):
     app = get_app(app_name)
     models =  get_models(app)
-    return [SchematicsModel.from_django(model) for model in models]
+    all_models = []
+    for model in models:
+        all_models += SchematicsModel.from_django(model)
+    return all_models
 
 
 def get_models_to_output(*apps_or_models):
@@ -39,12 +42,14 @@ def get_output(apps_or_models, to_file=False, auto_file_name='domain_auto', ):
     full_buffer = []
     for app_name, models in data.items():
         this_buffer = []
+        these_models = []
         for model in models:
-            this_buffer.append("\n\n" + SchematicsModel.from_django(model).to_string())
+            these_models += SchematicsModel.from_django(model)
+        this_buffer = [model.to_string() for model in these_models]
         if to_file:
             app_dir = os.path.dirname(models[0].__module__)
             output_file = os.path.join(app_dir, app_name, '%s.py' % auto_file_name)
             open(output_file, 'w').write("".join(this_buffer))
         full_buffer += this_buffer
     if not to_file:
-        return "\n".join(full_buffer)
+        return "\n\n" + "\n\n\n".join(full_buffer)

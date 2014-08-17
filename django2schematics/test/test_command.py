@@ -32,14 +32,22 @@ class ModelOnlyTest(TestCase):
         result = get_output( ["appone.SampleModel","appone.AnotherModel",
                                 'apptwo.SampleModelTwo'],
                             to_file=None, auto_file_name=None)
-        self.assertEqual(result, get_fixture_result('both_apps_output.py'))
+        expected = get_fixture_result('both_apps_output.py')
+        self.maxDiff = None
+        self.assertMultiLineEqual(result, expected)
 
 
 class AppNameTest(TestCase):
-    def test_one_model(self):
+    def test_one_app(self):
         data = get_models_to_output('apptwo')
         self.assertEquals(data.keys(), [ 'apptwo'])
         self.assertEquals(data['apptwo'], [SampleModelTwo])
+
+    def test_app_with_many(self):
+        result = get_output( ["appone"],
+                            to_file=None, auto_file_name=None)
+        expected = get_fixture_result('one_app_output.py')
+        self.assertMultiLineEqual(result, expected)
 
 
 

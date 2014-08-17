@@ -19,18 +19,18 @@ class AModel(Model):
 class ModelFieldListTest(TestCase):
     def test_field_count(self):
 
-        the_model = SchematicsModel.from_django(AModel)
+        the_model = SchematicsModel.from_django(AModel)[0]
         # id comes by default
         self.assertEqual(len(the_model.fields), 3)
 
     def test_field_labels(self):
-        the_model = SchematicsModel.from_django(AModel)
+        the_model = SchematicsModel.from_django(AModel)[0]
         self.assertEqual(the_model.fields[0].name, 'id')
         self.assertEqual(the_model.fields[1].name, 'label')
         self.assertEqual(the_model.fields[2].name, 'count')
 
     def test_field_types(self):
-        the_model = SchematicsModel.from_django(AModel)
+        the_model = SchematicsModel.from_django(AModel)[0]
         self.assertEqual(type(the_model.fields[0]), IntegerFieldModel)
         self.assertEqual(type(the_model.fields[1]), CharFieldModel)
         self.assertEqual(type(the_model.fields[0]), IntegerFieldModel)
@@ -38,7 +38,7 @@ class ModelFieldListTest(TestCase):
 
 class ModelOutputTest(TestCase):
     def test_simple_output(self):
-        the_model = SchematicsModel.from_django(AModel)
+        the_model = SchematicsModel.from_django(AModel)[0]
         output = """class AModel(Model):
     id = IntType(required=True)
     label = StringType(required=True, max_length=20)

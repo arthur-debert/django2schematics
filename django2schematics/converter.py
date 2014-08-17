@@ -1,3 +1,5 @@
+import re
+
 from djtypes import NullBooleanType
 from schematics.types import IntType, StringType, FloatType, DecimalType, \
     DateTimeType, BooleanType, EmailType
@@ -7,6 +9,11 @@ from django.db.models import AutoField, CharField, DateTimeField, \
     BooleanField, EmailField, NullBooleanField, ForeignKey, \
     IntegerField, FloatField, DecimalField, FileField, BigIntegerField
 from django.db.models.fields import NOT_PROVIDED
+
+
+def camelcase_to_underscore(the_input):
+    return re.sub(
+    '(((?<=[a-z])[A-Z])|([A-Z](?![A-Z]|$)))', '_\\1', the_input).lower().strip('_')
 
 
 class OptionModel(Model):
@@ -86,21 +93,26 @@ class DecimalFieldModel(FieldModel):
         return [x for x in FieldModel.get_options(field) +
                 [get_option(field, name, mapped_name, is_string) for
                  name, mapped_name, is_string in [
-                 ('decimal_places', 'decimal_places', False),
-                 ('max_digits', 'max_digits', False)]] if x]
+                    ('decimal_places', 'decimal_places', False),
+                    ('max_digits', 'max_digits', False)]] if x]
+
+
+def get_rel_name(rel):
+    value = rel.to
+    is_string = True
+    if isinstance(value, type):
+        value = value._meta.object_name
+        is_string = False
+    return value, is_string
 
 
 class ForeignKeyModel(FieldModel):
     @classmethod
     def get_options(cls, field):
         options = [x for x in FieldModel.get_options(field)]
-        value = field.rel.to
-        is_string = True
-        if isinstance(value, type):
-            value = value._meta.object_name
-            is_string = False
+        value, is_string = get_rel_name(field.rel)
         return options + [
-            OptionModel({'value': value, 'name': '', 'is_string':is_string})]
+            OptionModel({'value': value, 'name': '', 'is_string': is_string})]
 
 
 class IntegerFieldModel(FieldModel):
@@ -113,13 +125,27 @@ class SchematicsModel(Model):
 
     @staticmethod
     def from_django(the_model):
+        name = the_model._meta.object_name
         model = SchematicsModel({
-            'name': the_model._meta.object_name,
+            'name': name,
             'fields': [],
         })
+        all_models = [model]
         for field in the_model._meta.fields:
             model.fields.append(FieldModel.from_django(field))
-        return model
+
+        for many in the_model._meta.local_many_to_many:
+            this_many = SchematicsModel({
+                'name': "%sTo%sMany2Many" % (name, get_rel_name(many.rel)[0]),
+                'fields': []
+            })
+            first_fk = ForeignKey(the_model, name=camelcase_to_underscore(name))
+            this_many.fields.append(ForeignKeyModel.from_django(first_fk))
+            second_fk = ForeignKey(many.rel.to, name=camelcase_to_underscore(
+                get_rel_name(many.rel)[0]))
+            this_many.fields.append(ForeignKeyModel.from_django(second_fk))
+            all_models.append(this_many)
+        return all_models
 
     def to_string(self):
         return 'class %s(%s):\n    %s' % (self.name, 'Model', "\n    ".join([
