@@ -22,10 +22,10 @@ As a Stand Alone Script
 -----------------------
 Add django2schematics to your `INSTALLED_APPS` settings. Then::
 
-    python manage.py django2schematics app_name
+    python manage.py 2_schematics app_name
 
 You can specify full apps or models to export. By default the script will output
-to stdout. The `--as-files` flag will save each app models into
+to stdout. The `--to-file` flag will save each app models into
 `[app-dir]/domain-raw.py`.
 
 See `--help` for more options.
