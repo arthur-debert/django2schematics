@@ -27,8 +27,8 @@ def get_option(field, attr_name, mapped_name, is_string, transformer=None):
     if hasattr(field, attr_name) and getattr(field, attr_name) != NOT_PROVIDED:
         value = getattr(field, attr_name)
         return OptionModel({
-            'name': mapped_name or attr_name,
-            'value': value if not transformer else transformer(value),
+            'name': mapped_name or attr_name or '',
+            'value': str(value if not transformer else transformer(value)),
             'is_string': is_string
         })
 
@@ -94,8 +94,11 @@ class ForeignKeyModel(FieldModel):
     @classmethod
     def get_options(cls, field):
         options = [x for x in FieldModel.get_options(field)]
+        value = field.rel.to
+        if isinstance(value, type):
+            value = value.__class__.__name__
         return options + [
-            OptionModel({'value': field.rel.to})]
+            OptionModel({'value': value, 'name': '', 'is_string':True})]
 
 
 class IntegerFieldModel(FieldModel):
