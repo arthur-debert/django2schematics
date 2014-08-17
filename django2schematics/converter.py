@@ -12,14 +12,16 @@ from django.db.models.fields import NOT_PROVIDED
 class OptionModel(Model):
     name = StringType(required=False)
     value = StringType(required=True)
+    is_string = BooleanType()
 
     def to_string(self):
+        val = self.value if not self.is_string else "'%s'" % self.value
         if self.name:
-            return "%s=%s" % (self.name, self.value)
+            return "%s=%s" % (self.name, val)
         return "'%s'" % self.value
 
 
-def get_option(field, attr_name, mapped_name, transformer=None):
+def get_option(field, attr_name, mapped_name, is_string, transformer=None):
     if attr_name == 'name':
         return
     if hasattr(field, attr_name) and getattr(field, attr_name) != NOT_PROVIDED:
@@ -27,6 +29,7 @@ def get_option(field, attr_name, mapped_name, transformer=None):
         return OptionModel({
             'name': mapped_name or attr_name,
             'value': value if not transformer else transformer(value),
+            'is_string': is_string
         })
 
 
@@ -56,10 +59,10 @@ class FieldModel(Model):
     @classmethod
     def get_options(cls, field):
         options = [option for option in [
-            get_option(field, name, mapped_name, transformer) for
-            name, mapped_name, transformer in (
-                ("null", 'required', lambda x: not x),
-                ('default', 'default', None))] if option]
+            get_option(field, name, mapped_name, is_string, transformer) for
+            name, mapped_name, is_string, transformer in (
+                ("null", 'required', False, lambda x: not x),
+                ('default', 'default', True, None))] if option]
         return options
 
     def to_string(self):
@@ -74,17 +77,17 @@ class CharFieldModel(FieldModel):
     @classmethod
     def get_options(cls, field):
         return [x for x in FieldModel.get_options(field) +
-                [get_option(field, 'max_length', 'max_length')] if x]
+                [get_option(field, 'max_length', 'max_length', False)] if x]
 
 
 class DecimalFieldModel(FieldModel):
     @classmethod
     def get_options(cls, field):
         return [x for x in FieldModel.get_options(field) +
-                [get_option(field, name, mapped_name) for
-                 name, mapped_name in [
-                 ('decimal_places', 'decimal_places'),
-                 ('max_digits', 'max_digits')]] if x]
+                [get_option(field, name, mapped_name, is_string) for
+                 name, mapped_name, is_string in [
+                 ('decimal_places', 'decimal_places', False),
+                 ('max_digits', 'max_digits', False)]] if x]
 
 
 class ForeignKeyModel(FieldModel):
