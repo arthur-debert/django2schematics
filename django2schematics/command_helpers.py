@@ -1,8 +1,9 @@
 from __future__ import absolute_import
 from collections import defaultdict
 import os
+from django.core.exceptions import ImproperlyConfigured
 from django.db.models.loading import get_app, get_models, get_model
-from converter import SchematicsModel
+from django2schematics.converter import SchematicsModel
 
 
 def get_schematics_models(app_name):
@@ -19,16 +20,17 @@ def get_models_to_output(*apps_or_models):
     for item in apps_or_models:
         try:
             # if this is 'app_name.ModelName'
-            app_name = item.split(".")[:-1]
+            app_name = '.'.join(item.split(".")[:-1])
             model_name = item.split('.')[-1]
             model = get_model(app_name, model_name)
+            if not model:
+                raise ImproperlyConfigured("")
             django_models = [model]
-        except:
+        except ImproperlyConfigured:
             # it's an app name
             django_models = get_models(get_app(item))
             app_name = item
-        app_model_dict[app_name] += [get_schematics_models(model) 
-                           for model in django_models]
+        app_model_dict[app_name] += django_models
     return app_model_dict
 
 
@@ -40,7 +42,8 @@ def get_output(to_file=False, auto_file_name='domain_auto', *apps_or_models):
             this_buffer = []
         else:
             this_buffer = full_buffer
-        this_buffer.append("\n\n".join([model.to_string() for model in models]))
+        this_buffer.append("\n\n".join([
+            SchematicsModel.from_django(model).to_string() for model in models]))
         if to_file:
             app_dir = os.path.dirname(models[0].__file__)
             output_file = os.path.join(app_dir, '%s.py' % auto_file_name)
