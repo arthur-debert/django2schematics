@@ -5,7 +5,7 @@ from schematics.models import Model
 from schematics.types.compound import ModelType, ListType
 from django.db.models import AutoField, CharField, DateTimeField, \
     BooleanField, EmailField, NullBooleanField, ForeignKey, \
-    IntegerField, FloatField, DecimalField
+    IntegerField, FloatField, DecimalField, FileField, BigIntegerField
 from django.db.models.fields import NOT_PROVIDED
 
 
@@ -139,13 +139,16 @@ def get_schematics_type(the_type):
         ForeignKey: ModelType,
         DecimalField: DecimalType,
         FloatField: FloatType,
+        BigIntegerField: IntType,
     }.get(the_type, StringType)
 
 
 def get_type(field):
     known_types = (
         AutoField, IntegerField, CharField, DateTimeField, BooleanField,
-        EmailField, NullBooleanField, ForeignKey, DecimalField)
+        EmailField, NullBooleanField, ForeignKey, DecimalField, FileField,
+        BigIntegerField
+    )
     if type(field) in known_types:
         if type(field) == AutoField:
             return IntegerField

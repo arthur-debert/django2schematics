@@ -9,14 +9,13 @@ from schematics.types.compound import ModelType
 from django.db.models import (
     CharField, IntegerField, AutoField, DateTimeField,
     EmailField, BooleanField, NullBooleanField, ForeignKey,
-    DecimalField)
+    DecimalField, FileField, BigIntegerField)
 
 from django2schematics.djtypes import NullBooleanType
 from django2schematics.converter import get_type, get_schematics_type, FieldModel
 
 
 class IntegerFieldTest(TestCase):
-
     def test_get_type(self):
         self.assertEqual(get_type(IntegerField()), IntegerField)
 
@@ -138,3 +137,19 @@ class DecimalFieldTest(TestCase):
         option = field_model.options[1]
         self.assertEqual(option.name, 'decimal_places')
         self.assertEqual(option.value, '2')
+
+
+class FileFieldTest(TestCase):
+    def test_get_type(self):
+        self.assertEqual(get_type(FileField()), FileField)
+
+    def test_get_schematic_type(self):
+        self.assertEqual(get_schematics_type(type(FileField())), StringType)
+
+
+class BigIntegerFieldTest(TestCase):
+    def test_get_type(self):
+        self.assertEqual(get_type(BigIntegerField()), BigIntegerField)
+
+    def test_get_schematics_type(self):
+        self.assertEqual(get_schematics_type(type(BigIntegerField())), IntType)
