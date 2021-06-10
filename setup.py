@@ -10,7 +10,7 @@ setup(
     description='Generates shematics models from Django ones.',
     long_description=open('README.rst', 'r').read(),
     install_requires=[
-        'django==1.6.1',
+        'django==2.2.24',
         'schematics==0.9-5',
         'nose==1.3.3'
     ]
